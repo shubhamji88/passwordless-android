@@ -6,6 +6,7 @@ import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.PublicKeyCredential
+import androidx.lifecycle.LifecycleCoroutineScope
 import dev.passwordless.android.rest.PasswordlessHttpClient
 import dev.passwordless.android.rest.PasswordlessHttpClientFactory
 import dev.passwordless.android.rest.PasswordlessOptions
@@ -39,11 +40,35 @@ class PasswordlessClient(
     private lateinit var _coroutineScope: CoroutineScope
     private lateinit var credentialManager: CredentialManager
     private lateinit var _context: Context
+
+    /**
+     * Manages the communication with the Credential Manager API and performs registration operations for the Passwordless authentication flow.
+     *
+     * @param options The configuration options for Passwordless authentication.
+     * @param context The context of the activity.
+     * @param scope The coroutine scope of the activity.
+     */
+    constructor(
+        options: PasswordlessOptions,
+        context: Context,
+        scope: CoroutineScope) : this(options) {
+        setContext(context)
+        setCoroutineScope(scope)
+    }
+
     fun setCoroutineScope(coroutineScope: CoroutineScope): PasswordlessClient =
-        apply { _coroutineScope = coroutineScope }
+        apply {
+            if (::_coroutineScope.isInitialized) {
+                throw IllegalStateException("CoroutineScope cannot be set more than once")
+            }
+            _coroutineScope = coroutineScope
+        }
 
     fun setContext(context: Context): PasswordlessClient =
         apply {
+            if (::_context.isInitialized) {
+                throw IllegalStateException("Context cannot be set more than once")
+            }
             _context = context
             credentialManager = CredentialManager.create(_context)
         }
